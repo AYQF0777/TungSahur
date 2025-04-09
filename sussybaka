@@ -1,0 +1,89 @@
+-- Config
+local Distance = 8
+local Priority = "Health"
+local SkillOrder = {4, 1, "TeamAssist", 2, 3}
+local SkillDelay = 0.08
+
+-- Player and Services
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local Character = player.Character or player.CharacterAdded:Wait()
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+local BackpackRemote = player.Backpack:WaitForChild("Input"):WaitForChild("Remote")
+
+-- Noclip
+RunService.RenderStepped:Connect(function()
+    for _, part in pairs(player.Character:GetChildren()) do
+        if part:IsA("BasePart") then
+            part.CanCollide = false
+        end
+    end
+end)
+
+-- Get Enemy
+function getEnemy()
+    local enemy = {}
+    local enemies = workspace.Living:GetChildren()
+
+    for _, v in pairs(enemies) do
+        if not game.Players:GetPlayerFromCharacter(v) and v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+            table.insert(enemy, v)
+        end
+    end
+
+    -- Sorting the enemy based on priority
+    table.sort(enemy, function(a, b)
+        return (Priority == "Health" and a.Humanoid.Health < b.Humanoid.Health) or (Priority == "Distance" and a.HumanoidRootPart.Position.Y < b.HumanoidRootPart.Position.Y)
+    end)
+
+    return #enemy > 0 and enemy[1] or nil
+end
+
+-- Lock and Attack Behavior
+function lockAndAttack()
+    local enemy = getEnemy()
+
+    if enemy then
+        -- Locking behind the enemy (not teleporting)
+        local behindDirection = -enemy.HumanoidRootPart.CFrame.LookVector
+        local lockPosition = enemy.HumanoidRootPart.Position + behindDirection * Distance
+
+        -- Keep Y position stable (no falling)
+        local fixedY = player.Character.HumanoidRootPart.Position.Y
+        local finalPosition = Vector3.new(lockPosition.X, fixedY, lockPosition.Z)
+
+        -- Lock the position without teleporting (just rotate the character)
+        player.Character.HumanoidRootPart.CFrame = CFrame.new(finalPosition, enemy.HumanoidRootPart.Position)
+
+        -- M1 (Light Attack) -- No delay for M1, but stop if no enemy exists
+        if enemy.Humanoid.Health > 0 then
+            player.Backpack.Input.Remote:FireServer({'Light'})
+        end
+
+        -- Skills: Skill 4, 1, TeamAssist, 2, 3 with 0.1s delay between each
+        for _, skill in ipairs(SkillOrder) do
+            player.Backpack.Input.Remote:FireServer({'Skill', skill})
+            wait(SkillDelay)  -- Delay between each skill
+        end
+    end
+end
+
+-- Continuous Execution with Delay
+local lastLockTime = 0
+local lockDelay = 0.2  -- Delay in seconds to reduce frequent locking
+
+while true do
+    pcall(function()
+        local enemy = getEnemy()
+
+        -- Only lock and attack if there is an enemy
+        if enemy and enemy.Humanoid.Health > 0 and tick() - lastLockTime >= lockDelay then
+            -- Perform the lock and attack sequence
+            lockAndAttack()
+            lastLockTime = tick()  -- Update the last lock time
+        end
+
+        wait(0.1)  -- Adjust the frequency of the loop if necessary
+    end)
+end
