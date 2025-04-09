@@ -1,10 +1,10 @@
--- Config (Initial Values)
+-- Config
 local Distance = 8
 local Priority = "Health"
 local SkillOrder = {4, 1, "TeamAssist", 2, 3}
-local SkillDelay = 0.08
-local EnableNoclip = true
-local LockDelay = 0.2
+local SkillDelay = 0.02
+local EnableNoclip = false  -- Set this to true to enable noclip, false to disable it
+local LockDelay = 0.2  -- Adjustable lock delay
 
 -- Player and Services
 local Players = game:GetService("Players")
@@ -14,136 +14,7 @@ local Character = player.Character or player.CharacterAdded:Wait()
 local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
 local BackpackRemote = player.Backpack:WaitForChild("Input"):WaitForChild("Remote")
 
--- Create GUI for Configuration
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Parent = player.PlayerGui
-ScreenGui.Name = "ConfigGUI"
-
-local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 300, 0, 400)
-Frame.Position = UDim2.new(0.5, -150, 0.5, -200)
-Frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-Frame.Parent = ScreenGui
-
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(0, 300, 0, 40)
-Title.Text = "Script Configuration"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 20
-Title.BackgroundTransparency = 1
-Title.Parent = Frame
-
--- Noclip Toggle
-local NoclipLabel = Instance.new("TextLabel")
-NoclipLabel.Size = UDim2.new(0, 300, 0, 40)
-NoclipLabel.Text = "Enable Noclip"
-NoclipLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-NoclipLabel.TextSize = 16
-NoclipLabel.BackgroundTransparency = 1
-NoclipLabel.Position = UDim2.new(0, 0, 0, 40)
-NoclipLabel.Parent = Frame
-
-local NoclipButton = Instance.new("TextButton")
-NoclipButton.Size = UDim2.new(0, 100, 0, 30)
-NoclipButton.Text = EnableNoclip and "On" or "Off"
-NoclipButton.Position = UDim2.new(0, 200, 0, 40)
-NoclipButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-NoclipButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-NoclipButton.TextSize = 16
-NoclipButton.Parent = Frame
-NoclipButton.MouseButton1Click:Connect(function()
-    EnableNoclip = not EnableNoclip
-    NoclipButton.Text = EnableNoclip and "On" or "Off"
-end)
-
--- Distance Input
-local DistanceLabel = Instance.new("TextLabel")
-DistanceLabel.Size = UDim2.new(0, 300, 0, 40)
-DistanceLabel.Text = "Lock Distance: " .. Distance
-DistanceLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-DistanceLabel.TextSize = 16
-DistanceLabel.BackgroundTransparency = 1
-DistanceLabel.Position = UDim2.new(0, 0, 0, 80)
-DistanceLabel.Parent = Frame
-
-local DistanceSlider = Instance.new("Slider")
-DistanceSlider.Size = UDim2.new(0, 200, 0, 20)
-DistanceSlider.Position = UDim2.new(0, 50, 0, 120)
-DistanceSlider.MaxValue = 20
-DistanceSlider.MinValue = 1
-DistanceSlider.Value = Distance
-DistanceSlider.Parent = Frame
-DistanceSlider.Changed:Connect(function(value)
-    Distance = value
-    DistanceLabel.Text = "Lock Distance: " .. math.floor(Distance)
-end)
-
--- Priority Dropdown
-local PriorityLabel = Instance.new("TextLabel")
-PriorityLabel.Size = UDim2.new(0, 300, 0, 40)
-PriorityLabel.Text = "Priority: " .. Priority
-PriorityLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-PriorityLabel.TextSize = 16
-PriorityLabel.BackgroundTransparency = 1
-PriorityLabel.Position = UDim2.new(0, 0, 0, 160)
-PriorityLabel.Parent = Frame
-
-local PriorityButton = Instance.new("TextButton")
-PriorityButton.Size = UDim2.new(0, 200, 0, 30)
-PriorityButton.Text = "Health"
-PriorityButton.Position = UDim2.new(0, 50, 0, 200)
-PriorityButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-PriorityButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-PriorityButton.TextSize = 16
-PriorityButton.Parent = Frame
-PriorityButton.MouseButton1Click:Connect(function()
-    if Priority == "Health" then
-        Priority = "Distance"
-        PriorityButton.Text = "Distance"
-    else
-        Priority = "Health"
-        PriorityButton.Text = "Health"
-    end
-    PriorityLabel.Text = "Priority: " .. Priority
-end)
-
--- Lock Delay Input
-local LockDelayLabel = Instance.new("TextLabel")
-LockDelayLabel.Size = UDim2.new(0, 300, 0, 40)
-LockDelayLabel.Text = "Lock Delay: " .. LockDelay
-LockDelayLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-LockDelayLabel.TextSize = 16
-LockDelayLabel.BackgroundTransparency = 1
-LockDelayLabel.Position = UDim2.new(0, 0, 0, 240)
-LockDelayLabel.Parent = Frame
-
-local LockDelaySlider = Instance.new("Slider")
-LockDelaySlider.Size = UDim2.new(0, 200, 0, 20)
-LockDelaySlider.Position = UDim2.new(0, 50, 0, 280)
-LockDelaySlider.MaxValue = 1
-LockDelaySlider.MinValue = 0.1
-LockDelaySlider.Value = LockDelay
-LockDelaySlider.Parent = Frame
-LockDelaySlider.Changed:Connect(function(value)
-    LockDelay = value
-    LockDelayLabel.Text = "Lock Delay: " .. string.format("%.2f", LockDelay)
-end)
-
--- Skill Layout Buttons
-local SkillButton = Instance.new("TextButton")
-SkillButton.Size = UDim2.new(0, 200, 0, 30)
-SkillButton.Text = "Reset Skills"
-SkillButton.Position = UDim2.new(0, 50, 0, 320)
-SkillButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-SkillButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-SkillButton.TextSize = 16
-SkillButton.Parent = Frame
-SkillButton.MouseButton1Click:Connect(function()
-    -- Reset the SkillOrder here if needed
-    SkillOrder = {4, 1, "TeamAssist", 2, 3}
-end)
-
--- Noclip Function
+-- Noclip (Enable/Disable)
 if EnableNoclip then
     RunService.RenderStepped:Connect(function()
         for _, part in pairs(player.Character:GetChildren()) do
@@ -219,5 +90,6 @@ while true do
         wait(0.1)  -- Adjust the frequency of the loop if necessary
     end)
 end
+
 
 
