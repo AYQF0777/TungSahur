@@ -1,10 +1,4 @@
--- Config
-local Distance = 8
-local Priority = "Health"
-local SkillOrder = {4, 1, "TeamAssist", 2, 3}
-local SkillDelay = 0.08
-
--- Player and Services
+-- Player and Services (https://github.com/AYQF0777/TungSahur)
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local RunService = game:GetService("RunService")
@@ -12,14 +6,16 @@ local Character = player.Character or player.CharacterAdded:Wait()
 local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
 local BackpackRemote = player.Backpack:WaitForChild("Input"):WaitForChild("Remote")
 
--- Noclip
-RunService.RenderStepped:Connect(function()
-    for _, part in pairs(player.Character:GetChildren()) do
-        if part:IsA("BasePart") then
-            part.CanCollide = false
+-- Noclip (Enable/Disable)
+if EnableNoclip then
+    RunService.RenderStepped:Connect(function()
+        for _, part in pairs(player.Character:GetChildren()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+            end
         end
-    end
-end)
+    end)
+end
 
 -- Get Enemy
 function getEnemy()
@@ -71,14 +67,13 @@ end
 
 -- Continuous Execution with Delay
 local lastLockTime = 0
-local lockDelay = 0.2  -- Delay in seconds to reduce frequent locking
 
 while true do
     pcall(function()
         local enemy = getEnemy()
 
         -- Only lock and attack if there is an enemy
-        if enemy and enemy.Humanoid.Health > 0 and tick() - lastLockTime >= lockDelay then
+        if enemy and enemy.Humanoid.Health > 0 and tick() - lastLockTime >= LockDelay then
             -- Perform the lock and attack sequence
             lockAndAttack()
             lastLockTime = tick()  -- Update the last lock time
@@ -87,3 +82,4 @@ while true do
         wait(0.1)  -- Adjust the frequency of the loop if necessary
     end)
 end
+
