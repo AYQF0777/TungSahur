@@ -1,8 +1,8 @@
 -- Config
 local Distance = 8
 local Priority = "Health"
-local SkillOrder = {4, "TeamAssist", 1, 2, 3}
-local SkillDelay = 0.02
+local SkillOrder = {2, 4, 1, "TeamAssist", 3}
+local SkillDelay = 0.05
 local EnableNoclip = false  -- Set this to true to enable noclip, false to disable it
 local LockDelay = 0.2  -- Adjustable lock delay
 
