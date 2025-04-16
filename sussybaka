@@ -1,10 +1,10 @@
 -- Config
 local Distance = 8
 local Priority = "Health"
-local SkillOrder = {2, 4, 1, "TeamAssist", 3}
-local SkillDelay = 0.05
+local SkillOrder = {2, 4, "TeamAssist", 1}  -- 3rd skill removed from here
+local SkillDelay = 0.1
 local EnableNoclip = false  -- Set this to true to enable noclip, false to disable it
-local LockDelay = 0.2  -- Adjustable lock delay
+local LockDelay = 0.15  -- Adjustable lock delay
 
 -- Player and Services
 local Players = game:GetService("Players")
@@ -65,11 +65,22 @@ function lockAndAttack()
             player.Backpack.Input.Remote:FireServer({'Light'})
         end
 
-        -- Skills: Skill 4, 1, TeamAssist, 2, 3 with 0.1s delay between each
+        -- Skills: Skill 4, 1, TeamAssist, 2 (excluding 3rd skill)
         for _, skill in ipairs(SkillOrder) do
             player.Backpack.Input.Remote:FireServer({'Skill', skill})
             wait(SkillDelay)  -- Delay between each skill
         end
+    end
+end
+
+-- Use 3rd skill if enemy health is below 30%
+function checkAndUseSkill3()
+    local enemy = getEnemy()
+
+    if enemy and enemy.Humanoid.Health < enemy.Humanoid.MaxHealth * 0.30 then
+        -- Use the 3rd skill if health is below 30%
+        player.Backpack.Input.Remote:FireServer({'Skill', 3})
+        wait(SkillDelay)  -- Allow a small delay before moving on to other actions
     end
 end
 
@@ -85,11 +96,11 @@ while true do
             -- Perform the lock and attack sequence
             lockAndAttack()
             lastLockTime = tick()  -- Update the last lock time
+
+            -- Check if we need to use the 3rd skill (health < 30%)
+            checkAndUseSkill3()
         end
 
         wait(0.1)  -- Adjust the frequency of the loop if necessary
     end)
 end
-
-
-
