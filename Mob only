@@ -1,3 +1,16 @@
+-- Auto Room Creation Before Entering Game
+local _Lobby = {}
+_Lobby.Level = "" -- Map Selection
+_Lobby.Password = "Jocelyn" -- Password
+
+repeat wait() until game:IsLoaded() and game.Players and game.Players.LocalPlayer and game.Players.LocalPlayer.Character
+if game.PlaceId == 6284881984 then
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    ReplicatedStorage.Remotes.CreateRoom:InvokeServer(_Lobby.Level, _Lobby.Password)
+    ReplicatedStorage.Remotes.BeginRoom:FireServer()
+end
+
+-- Script Continues After Lobby
 local Distance = 7.5
 local Priority = "Health"
 local SkillOrder = {2, "TeamAssist", 1 ,3} -- 3rd skill handled separately
@@ -140,7 +153,3 @@ RunService.Heartbeat:Connect(function()
         lastMoveTime = tick()
     end
 end)
-
-        wait(0.1)  -- Adjust the frequency of the loop if necessary
-    end)
-end
