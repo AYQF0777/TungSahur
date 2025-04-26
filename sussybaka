@@ -129,4 +129,17 @@ RunService.Heartbeat:Connect(function()
     end)
 end)
 
+-- Auto Move Forward Every 150 Seconds
+local lastMoveTime = 0
+local moveInterval = 150 -- 2.5 minutes in seconds
+
+RunService.Heartbeat:Connect(function()
+    if tick() - lastMoveTime >= moveInterval then
+        pressKey(Enum.KeyCode.W)
+        wait(1)
+        lastMoveTime = tick()
+    end
+end)
+
+
 
