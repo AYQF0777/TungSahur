@@ -10,13 +10,13 @@ if game.PlaceId == 6284881984 then
     ReplicatedStorage.Remotes.BeginRoom:FireServer()
 end
 
--- Script Continues After Lobby
-local Distance = 7.5
+-- Script Continues After Lobby --No SKILL3 ZHANSHA
+local Distance = 7
 local Priority = "Health"
-local SkillOrder = {2, "TeamAssist", 1 ,3} -- 3rd skill handled separately
-local SkillDelay = 0
+local SkillOrder = {4, 2, "TeamAssist", 1 ,3}
+local SkillDelay = 0.3
 local EnableNoclip = false
-local LockDelay = 0.1
+local LockDelay = 0.15
 
 -- Services
 local Players = game:GetService("Players")
@@ -61,7 +61,7 @@ function getEnemy()
     end
     table.sort(enemyList, function(a, b)
         return (Priority == "Health" and a.Humanoid.Health < b.Humanoid.Health)
-            or (Priority == "Distance" and a.HumanoidRootPart.Position.Y < b.HumanoidRootPart.Position.Y) -- compares Y height
+            or (Priority == "Distance" and a.HumanoidRootPart.Position.Y < b.HumanoidRootPart.Position.Y)
     end)
     return #enemyList > 0 and enemyList[1] or nil
 end
@@ -103,18 +103,6 @@ function lockAndAttack()
     end
 end
 
--- Skill 3 Condition
-function checkAndUseSkill3()
-    local enemy = getEnemy()
-    if enemy and enemy.Humanoid.Health < enemy.Humanoid.MaxHealth * 0.30 then
-        local skill3Key = KeyMap[3]
-        if skill3Key then
-            pressKey(skill3Key)
-            wait(SkillDelay)
-        end
-    end
-end
-
 -- Character Initialize
 function initialize()
     Character = player.Character or player.CharacterAdded:Wait()
@@ -136,20 +124,21 @@ RunService.Heartbeat:Connect(function()
         local enemy = getEnemy()
         if enemy and enemy.Humanoid.Health > 0 and tick() - lastLockTime >= LockDelay then
             lockAndAttack()
-            checkAndUseSkill3()
             lastLockTime = tick()
         end
     end)
 end)
 
--- Auto Move Forward Every 150 Seconds
+-- Auto Move Forward Every 300 Seconds
 local lastMoveTime = 0
 local moveInterval = 300 -- 5 minutes in seconds
 
 RunService.Heartbeat:Connect(function()
     if tick() - lastMoveTime >= moveInterval then
-        pressKey(Enum.KeyCode.W)
+        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.W, false, game)
         wait(1)
+        VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.W, false, game)
         lastMoveTime = tick()
     end
 end)
+
