@@ -10,13 +10,14 @@ if game.PlaceId == 6284881984 then
     ReplicatedStorage.Remotes.BeginRoom:FireServer()
 end
 
--- Script Continues After Lobby --No SKILL3 ZHANSHA
-local Distance = 7
-local Priority = "Health"
-local SkillOrder = {4, 2, "TeamAssist", 1 ,3}
-local SkillDelay = 0.3
+-- Config
+local Distance = 6 -- Slightly closer for better combo
+local Priority = "Health" -- "Health" or "Distance"
+local SkillOrder = {4, 2, "TeamAssist", 1}
+local SkillDelay = 0.15 -- Faster skill cast
+local LockDelay = 0.1 -- Faster locking
+local moveInterval = 150 -- seconds
 local EnableNoclip = false
-local LockDelay = 0.15
 
 -- Services
 local Players = game:GetService("Players")
@@ -25,9 +26,9 @@ local VirtualInputManager = game:GetService("VirtualInputManager")
 local player = Players.LocalPlayer
 
 -- Variables
-local Character
-local HumanoidRootPart
-local lastLockTime = 0
+local Character, HumanoidRootPart
+local lastLockTime, lastMoveTime = 0, 0
+local currentEnemy = nil
 
 -- Key Map
 local KeyMap = {
@@ -38,11 +39,17 @@ local KeyMap = {
     ["TeamAssist"] = Enum.KeyCode.Z
 }
 
--- Noclip Handler
+-- Initialize Character
+local function initializeCharacter()
+    Character = player.Character or player.CharacterAdded:Wait()
+    HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+end
+
+-- Noclip (Optional)
 if EnableNoclip then
     RunService.RenderStepped:Connect(function()
-        if player.Character then
-            for _, part in pairs(player.Character:GetChildren()) do
+        if Character then
+            for _, part in pairs(Character:GetChildren()) do
                 if part:IsA("BasePart") then
                     part.CanCollide = false
                 end
@@ -51,94 +58,107 @@ if EnableNoclip then
     end)
 end
 
--- Get Enemy
-function getEnemy()
-    local enemyList = {}
+-- Get Best Enemy
+local function getEnemy()
+    local enemies = {}
     for _, v in pairs(workspace.Living:GetChildren()) do
         if not Players:GetPlayerFromCharacter(v) and v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
-            table.insert(enemyList, v)
+            table.insert(enemies, v)
         end
     end
-    table.sort(enemyList, function(a, b)
-        return (Priority == "Health" and a.Humanoid.Health < b.Humanoid.Health)
-            or (Priority == "Distance" and a.HumanoidRootPart.Position.Y < b.HumanoidRootPart.Position.Y)
+    table.sort(enemies, function(a, b)
+        if Priority == "Health" then
+            return a.Humanoid.Health < b.Humanoid.Health
+        else
+            return (a.HumanoidRootPart.Position - HumanoidRootPart.Position).Magnitude < (b.HumanoidRootPart.Position - HumanoidRootPart.Position).Magnitude
+        end
     end)
-    return #enemyList > 0 and enemyList[1] or nil
+    return enemies[1]
 end
 
--- Simulate M1 (Mouse Left Click)
-function clickM1()
+-- Input Simulators
+local function clickM1()
     VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
     VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
 end
 
--- Simulate Key Press
-function pressKey(keycode)
+local function pressKey(keycode)
     VirtualInputManager:SendKeyEvent(true, keycode, false, game)
     VirtualInputManager:SendKeyEvent(false, keycode, false, game)
 end
 
--- Lock and Attack
-function lockAndAttack()
-    local enemy = getEnemy()
-    if not enemy then return end
-
-    local behindDirection = -enemy.HumanoidRootPart.CFrame.LookVector
-    local lockPosition = enemy.HumanoidRootPart.Position + behindDirection * Distance
-    local fixedY = HumanoidRootPart.Position.Y
-    local finalPosition = Vector3.new(lockPosition.X, fixedY, lockPosition.Z)
-
-    HumanoidRootPart.CFrame = CFrame.new(finalPosition, enemy.HumanoidRootPart.Position)
-
-    if enemy.Humanoid.Health > 0 then
+-- Attack Combo
+local function attackCombo()
+    if currentEnemy and currentEnemy:FindFirstChild("Humanoid") and currentEnemy.Humanoid.Health > 0 then
         clickM1()
+        for _, skill in ipairs(SkillOrder) do
+            local key = KeyMap[skill]
+            if key then
+                pressKey(key)
+                wait(SkillDelay)
+            end
+        end
     end
+end
 
-    for _, skill in ipairs(SkillOrder) do
-        local keycode = KeyMap[skill]
-        if keycode then
-            pressKey(keycode)
+-- Skill 3 Kill Secure
+local function checkAndUseSkill3()
+    if currentEnemy and currentEnemy:FindFirstChild("Humanoid") and currentEnemy.Humanoid.Health <= currentEnemy.Humanoid.MaxHealth * 0.3 then
+        local skill3 = KeyMap[3]
+        if skill3 then
+            pressKey(skill3)
             wait(SkillDelay)
         end
     end
 end
 
--- Character Initialize
-function initialize()
-    Character = player.Character or player.CharacterAdded:Wait()
-    HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+-- Lock Behind Enemy
+local function lockBehindEnemy()
+    if currentEnemy and currentEnemy:FindFirstChild("HumanoidRootPart") and HumanoidRootPart then
+        local enemyRoot = currentEnemy.HumanoidRootPart
+        local offset = -enemyRoot.CFrame.LookVector * Distance
+        local position = enemyRoot.Position + Vector3.new(offset.X, 0, offset.Z)
+        HumanoidRootPart.CFrame = CFrame.new(position, enemyRoot.Position)
+    end
 end
 
 -- Respawn Handler
 player.CharacterAdded:Connect(function()
-    wait(1)
-    initialize()
+    wait(0.5)
+    initializeCharacter()
 end)
 
--- Initial Setup
-initialize()
+-- Startup
+initializeCharacter()
 
--- Main Loop
+-- Main Combat Loop
 RunService.Heartbeat:Connect(function()
     pcall(function()
-        local enemy = getEnemy()
-        if enemy and enemy.Humanoid.Health > 0 and tick() - lastLockTime >= LockDelay then
-            lockAndAttack()
-            lastLockTime = tick()
+        -- Always check if enemy needs refresh
+        if not currentEnemy or not currentEnemy.Parent or not currentEnemy:FindFirstChild("Humanoid") or currentEnemy.Humanoid.Health <= 0 then
+            currentEnemy = getEnemy()
+        end
+
+        -- Engage Combat
+        if currentEnemy and HumanoidRootPart then
+            lockBehindEnemy()
+
+            if tick() - lastLockTime >= LockDelay then
+                attackCombo()
+                checkAndUseSkill3()
+                lastLockTime = tick()
+            end
         end
     end)
 end)
 
--- Auto Move Forward Every 300 Seconds
-local lastMoveTime = 0
-local moveInterval = 300 -- 5 minutes in seconds
-
+-- Auto Move Forward Handler
 RunService.Heartbeat:Connect(function()
     if tick() - lastMoveTime >= moveInterval then
-        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.W, false, game)
+        pressKey(Enum.KeyCode.W)
         wait(1)
-        VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.W, false, game)
         lastMoveTime = tick()
     end
 end)
+
 
