@@ -2,20 +2,29 @@
 local Distance = 8
 local Priority = "Health"
 local SkillOrder = {4, 2, "TeamAssist", 1} -- 3rd skill handled separately
-local SkillDelay = 0
+local SkillDelay = -1
 local EnableNoclip = false
-local LockDelay = 0.15
+local LockDelay = 0.1
 
 -- Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
 local player = Players.LocalPlayer
 
 -- Variables
 local Character
 local HumanoidRootPart
-local BackpackRemote
 local lastLockTime = 0
+
+-- Key Map
+local KeyMap = {
+    [1] = Enum.KeyCode.One,
+    [2] = Enum.KeyCode.Two,
+    [3] = Enum.KeyCode.Three,
+    [4] = Enum.KeyCode.Four,
+    ["TeamAssist"] = Enum.KeyCode.Z
+}
 
 -- Noclip Handler
 if EnableNoclip then
@@ -30,7 +39,7 @@ if EnableNoclip then
     end)
 end
 
--- Get Enemy Function
+-- Get Enemy
 function getEnemy()
     local enemyList = {}
     for _, v in pairs(workspace.Living:GetChildren()) do
@@ -45,6 +54,18 @@ function getEnemy()
     return #enemyList > 0 and enemyList[1] or nil
 end
 
+-- Simulate M1 (Mouse Left Click)
+function clickM1()
+    VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0) -- MouseButton1Down
+    VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0) -- MouseButton1Up
+end
+
+-- Simulate Key Press
+function pressKey(keycode)
+    VirtualInputManager:SendKeyEvent(true, keycode, false, game)
+    VirtualInputManager:SendKeyEvent(false, keycode, false, game)
+end
+
 -- Lock and Attack
 function lockAndAttack()
     local enemy = getEnemy()
@@ -57,13 +78,18 @@ function lockAndAttack()
 
     player.Character.HumanoidRootPart.CFrame = CFrame.new(finalPosition, enemy.HumanoidRootPart.Position)
 
+    -- M1 Attack
     if enemy.Humanoid.Health > 0 then
-        BackpackRemote:FireServer({'Light'})
+        clickM1()
     end
 
+    -- Skill Usage
     for _, skill in ipairs(SkillOrder) do
-        BackpackRemote:FireServer({'Skill', skill})
-        wait(SkillDelay)
+        local keycode = KeyMap[skill]
+        if keycode then
+            pressKey(keycode)
+            wait(SkillDelay)
+        end
     end
 end
 
@@ -71,19 +97,18 @@ end
 function checkAndUseSkill3()
     local enemy = getEnemy()
     if enemy and enemy.Humanoid.Health < enemy.Humanoid.MaxHealth * 0.30 then
-        BackpackRemote:FireServer({'Skill', 3})
+        pressKey(KeyMap[3])
         wait(SkillDelay)
     end
 end
 
--- Character Initialization
+-- Character Initialize
 function initialize()
     Character = player.Character or player.CharacterAdded:Wait()
     HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-    BackpackRemote = player.Backpack:WaitForChild("Input"):WaitForChild("Remote")
 end
 
--- Respawn Listener
+-- Respawn Handler
 player.CharacterAdded:Connect(function()
     wait(1)
     initialize()
@@ -103,3 +128,4 @@ RunService.Heartbeat:Connect(function()
         end
     end)
 end)
+
