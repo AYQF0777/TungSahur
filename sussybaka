@@ -3,7 +3,7 @@ local Priority = "Health"
 local SkillOrder = {4, 2, "TeamAssist", 1} -- 3rd skill handled separately
 local SkillDelay = 0
 local EnableNoclip = false
-local LockDelay = 0.15
+local LockDelay = 0.1
 
 -- Services
 local Players = game:GetService("Players")
