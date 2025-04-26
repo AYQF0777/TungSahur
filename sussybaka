@@ -1,4 +1,17 @@
-local Distance = 8
+-- Auto Room Creation Before Entering Game
+local _Lobby = {}
+_Lobby.Level = "Lord Aiden" -- Map Selection
+_Lobby.Password = "Jocelyn" -- Password
+
+repeat wait() until game:IsLoaded() and game.Players and game.Players.LocalPlayer and game.Players.LocalPlayer.Character
+if game.PlaceId == 6284881984 then
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    ReplicatedStorage.Remotes.CreateRoom:InvokeServer(_Lobby.Level, _Lobby.Password)
+    ReplicatedStorage.Remotes.BeginRoom:FireServer()
+end
+
+-- Script Continues After Lobby
+local Distance = 7.5
 local Priority = "Health"
 local SkillOrder = {4, 2, "TeamAssist", 1} -- 3rd skill handled separately
 local SkillDelay = 0
@@ -131,7 +144,7 @@ end)
 
 -- Auto Move Forward Every 150 Seconds
 local lastMoveTime = 0
-local moveInterval = 150 -- 2.5 minutes in seconds
+local moveInterval = 300 -- 5 minutes in seconds
 
 RunService.Heartbeat:Connect(function()
     if tick() - lastMoveTime >= moveInterval then
