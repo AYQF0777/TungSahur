@@ -13,7 +13,7 @@ end
 -- Config
 local Distance = 6 -- Slightly closer for better combo
 local Priority = "Health" -- "Health" or "Distance"
-local SkillOrder = {4, 2, "TeamAssist", 1}
+local SkillOrder = {3, 2, "TeamAssist", 1, 4}
 local SkillDelay = 0.15 -- Faster skill cast
 local LockDelay = 0.1 -- Faster locking
 local moveInterval = 150 -- seconds
